@@ -9,7 +9,7 @@ summarizer_model_name = "EXP442/pegasus_summarizer"
 summarizer_tokenizer = PegasusTokenizer.from_pretrained(summarizer_model_name)
 summarizer_model = PegasusForConditionalGeneration.from_pretrained(summarizer_model_name)
 
-# 번역 모델 및 토크나이저 설정 (translator_model 및 translator_tokenizer로 변경)
+# 번역 모델 및 토크나이저 설정
 translator_model_name = "EXP442/nllb_translator_pretrained"
 translator_model = AutoModelForSeq2SeqLM.from_pretrained(translator_model_name)
 translator_tokenizer = AutoTokenizer.from_pretrained(translator_model_name)
