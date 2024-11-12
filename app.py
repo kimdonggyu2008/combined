@@ -1,25 +1,24 @@
 from flask import Flask, request, jsonify
 from transformers import PegasusTokenizer, PegasusForConditionalGeneration, AutoTokenizer, AutoModelForSeq2SeqLM
 import re
-import torch
 
 app = Flask(__name__)
 
 # 요약 모델 및 토크나이저 설정
 summarizer_model_name = "EXP442/pegasus_summarizer"
 summarizer_tokenizer = PegasusTokenizer.from_pretrained(summarizer_model_name)
-summarizer_model = PegasusForConditionalGeneration.from_pretrained(summarizer_model_name).to('cuda')
+summarizer_model = PegasusForConditionalGeneration.from_pretrained(summarizer_model_name)
 
-# 번역 모델 및 토크나이저 설정
-translator_model_name = "facebook/nllb-200-distilled-600M"
-model = AutoModelForSeq2SeqLM.from_pretrained(translator_model_name, forced_bos_token_id=256098).to('cuda')
-tokenizer = AutoTokenizer.from_pretrained(translator_model_name, src_lang='eng_Latn', tgt_lang='kor_Hang')
+# 번역 모델 및 토크나이저 설정 (translator_model 및 translator_tokenizer로 변경)
+translator_model_name = "EXP442/nllb_translator_pretrained"
+translator_model = AutoModelForSeq2SeqLM.from_pretrained(translator_model_name)
+translator_tokenizer = AutoTokenizer.from_pretrained(translator_model_name)
 
 # 텍스트 번역 함수
 def translate_text(text):
-    inputs = tokenizer(text, return_tensors="pt", truncation=True).to('cuda')
-    translated_ids = model.generate(inputs["input_ids"], max_length=512, num_beams=4, early_stopping=True)
-    translation = tokenizer.decode(translated_ids[0], skip_special_tokens=True)
+    inputs = translator_tokenizer(text, return_tensors="pt", truncation=True)
+    translated_ids = translator_model.generate(inputs["input_ids"], max_length=512, num_beams=4, early_stopping=True)
+    translation = translator_tokenizer.decode(translated_ids[0], skip_special_tokens=True)
     return translation
 
 # 텍스트 분할 함수
@@ -46,7 +45,7 @@ def summarize_long_text(article_text, target_chunk_length=2048):
     summaries = []
 
     for chunk in chunks:
-        inputs = summarizer_tokenizer(chunk, max_length=target_chunk_length, return_tensors="pt", truncation=True).to('cuda')
+        inputs = summarizer_tokenizer(chunk, max_length=target_chunk_length, return_tensors="pt", truncation=True)
         summary_ids = summarizer_model.generate(inputs["input_ids"], max_length=200, min_length=50, length_penalty=2.0, num_beams=4, early_stopping=True)
         summary = summarizer_tokenizer.decode(summary_ids[0], skip_special_tokens=True)
         summaries.append(summary)
